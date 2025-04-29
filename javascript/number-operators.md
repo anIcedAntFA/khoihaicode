@@ -33,6 +33,64 @@ Used to perform mathematical operations.
 
 The increment (`++`) and decrement (`--`) operators add or subtract `1` from a variable's value. They can be used as a **prefix** (before the variable) or a **postfix** (after the variable). The choice matters when the operator is used **within a larger expression**.
 
+- **Forms:**
+
+  - **Postfix:** The operator comes _after_ the variable (`i++`, `i--`).
+  - **Prefix:** The operator comes _before_ the variable (`++i`, `--i`).
+
+- **Key Difference: Value in Expressions**
+
+  - **Postfix (`i++`, `i--`):**
+
+    1. The variable's **original value** is used in the expression.
+    2. _After_ the expression is evaluated, the variable is then incremented/decremented by 1.
+
+    ```js
+    i++;
+    const temp = 1;
+    i += 1;
+    return temp;
+    ```
+
+  - **Prefix (`++i`, `--i`):**
+
+    1. The variable is incremented/decremented by 1 **first**.
+    2. The variable's **new value** is then used in the expression.
+
+    ```js
+    ++i;
+    i += 1;
+    return i;
+    ```
+
+- **Examples:**
+
+```js
+// Postfix Increment (i++)
+let i = 5;
+let j = i++; // The original value of 'i' (5) is used for the assignment to 'j'. Then i becomes 6.
+console.log(i); // Output: 6
+console.log(j); // Output: 5
+
+// Prefix Increment (++i)
+let a = 5;
+let b = ++a; // 'a' is incremented to 6 *before* being used for the assignment to 'b'.
+console.log(a); // Output: 6
+console.log(b); // Output: 6
+
+// Postfix Decrement (x--)
+let x = 10;
+let y = x--; // y gets 10, then x becomes 9.
+console.log(x); // Output: 9
+console.log(y); // Output: 10
+
+// Prefix Decrement (--a)
+let c = 10;
+let d = --c; // c becomes 9 first, then d gets 9.
+console.log(c); // Output: 9
+console.log(d); // Output: 9
+```
+
 ## Assignment Operators
 
 Used to assign values to variables.
@@ -56,3 +114,12 @@ Used to assign values to variables.
 - **Division by Zero:** Be aware that it results in `Infinity`, `-Infinity`, or `NaN`, not an error.
 - **Operator Precedence:** Operations are performed in a specific order (e.g., multiplication and division before addition and subtraction). Use parentheses `()` to control the order if needed.
 - **Modulo Operator (`%`):** Remember it gives the _remainder_ of a division, not the fractional part or the integer result.
+
+## Exercises
+
+```js
+let i = 1;
+let result = ++i + i++ - i-- + --i + ++i;
+//             2 + 2   - 3   +   1 +   2;
+console.log(result); // 4
+```

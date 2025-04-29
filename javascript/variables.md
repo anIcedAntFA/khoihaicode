@@ -118,3 +118,6 @@ console.log(myConst); // 5
 - Use `let` if you know the variable needs to be reassigned later in its scope (e.g., loop counters, variables whose value is updated based on conditions).
 
 [tdz]: https://feddi.com
+
+please help me convert this content into english but in summary, I want to learn javascript and take note under syntax markdown, give me the raw Markdown source code that I can easily copy paste to my file
+you could modify, add more, update content and give more examples difference content above
