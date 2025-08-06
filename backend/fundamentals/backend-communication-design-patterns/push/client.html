@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Chat Client</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      #messages {
+        height: 300px;
+        border: 1px solid #ccc;
+        overflow-y: scroll;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+      }
+      #messageInput {
+        width: 70%;
+        padding: 8px;
+      }
+      #sendButton {
+        width: 25%;
+        padding: 8px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      #sendButton:hover {
+        background-color: #0056b3;
+      }
+      .message {
+        margin: 5px 0;
+        padding: 5px;
+        background-color: white;
+        border-radius: 3px;
+      }
+      .status {
+        color: #666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WebSocket Chat Client</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    <input
+      type="text"
+      id="messageInput"
+      placeholder="Type your message here..."
+    />
+    <button id="sendButton">Send</button>
+
+    <script>
+      // WebSocket client code
+      let ws = new WebSocket('wss://be.ngockhoi96.dev');
+      const messagesDiv = document.getElementById('messages');
+      const messageInput = document.getElementById('messageInput');
+      const sendButton = document.getElementById('sendButton');
+      const statusDiv = document.getElementById('status');
+
+      ws.onopen = function () {
+        statusDiv.textContent = 'Connected to server';
+        statusDiv.style.color = 'green';
+        console.log('Connected to WebSocket server');
+      };
+
+      ws.onmessage = function (message) {
+        console.log(`Received: ${message.data}`);
+
+        // Display message in the chat
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message';
+        messageElement.textContent = message.data;
+        messagesDiv.appendChild(messageElement);
+
+        // Auto scroll to bottom
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      };
+
+      ws.onclose = function () {
+        statusDiv.textContent = 'Disconnected from server';
+        statusDiv.style.color = 'red';
+        console.log('WebSocket connection closed');
+      };
+
+      ws.onerror = function (error) {
+        statusDiv.textContent = 'Connection error';
+        statusDiv.style.color = 'red';
+        console.error('WebSocket error:', error);
+      };
+
+      // Send message function
+      function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message && ws.readyState === WebSocket.OPEN) {
+          ws.send(message);
+          messageInput.value = '';
+        }
+      }
+
+      // Event listeners
+      sendButton.addEventListener('click', sendMessage);
+      messageInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
+      // Test message on load (optional)
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send("Hello! I'm a client");
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>
