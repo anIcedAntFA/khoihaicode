@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSE Demo - Live Dashboard</title>
+    <link rel="stylesheet" href="sse-demo.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 Server-Sent Events Live Dashboard</h1>
+
+      <div class="status-bar">
+        <div>
+          Status:
+          <span id="connectionStatus" class="disconnected">Disconnected</span>
+        </div>
+        <div>Events Received: <span id="eventCount">0</span></div>
+        <div>Connected Clients: <span id="clientCount">-</span></div>
+      </div>
+
+      <div class="controls">
+        <button id="connectBtn" onclick="connectSSE()">Connect to SSE</button>
+        <button id="disconnectBtn" onclick="disconnectSSE()" disabled>
+          Disconnect
+        </button>
+        <button onclick="simulateStock()">Simulate Stock Update</button>
+        <button onclick="simulateNotification()">Simulate Notification</button>
+        <button onclick="startJob()">Start Job</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="refreshStatus()">Refresh Status</button>
+      </div>
+
+      <div class="panels">
+        <div class="panel">
+          <h3>📈 Live Stock Prices</h3>
+          <div id="stockPrices" class="content-area"></div>
+        </div>
+
+        <div class="panel">
+          <h3>🔔 Live Notifications</h3>
+          <div id="notifications" class="content-area"></div>
+        </div>
+
+        <div class="panel">
+          <h3>⚙️ Job Progress</h3>
+          <div id="jobProgress" class="content-area"></div>
+        </div>
+
+        <div class="panel">
+          <h3>📋 Event Log</h3>
+          <div class="event-log" id="eventLog"></div>
+        </div>
+      </div>
+
+      <div class="explanation">
+        <h3>🎯 Server-Sent Events Pattern</h3>
+        <p><strong>"One Request, One Very Long Response"</strong></p>
+        <ul>
+          <li>
+            ✅ Client makes <strong>ONE</strong> HTTP request to
+            <code>/events</code>
+          </li>
+          <li>✅ Server keeps connection <strong>open indefinitely</strong></li>
+          <li>
+            ✅ Server <strong>streams events</strong> as they happen (real-time)
+          </li>
+          <li>
+            ✅ Client <strong>passively listens</strong> and updates UI
+            automatically
+          </li>
+          <li>
+            ✅ <strong>No polling</strong> - server pushes data when available
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="sse-client.js"></script>
+  </body>
+</html>

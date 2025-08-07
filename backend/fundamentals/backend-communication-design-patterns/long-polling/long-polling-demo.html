@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Long Polling Demo - Job Status Tracker</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+
+      .container {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .step-section {
+        margin: 20px 0;
+        padding: 15px;
+        border-left: 4px solid #4caf50;
+        background: #f9f9f9;
+        border-radius: 0 5px 5px 0;
+      }
+
+      .step-title {
+        font-weight: bold;
+        color: #2196f3;
+        margin-bottom: 10px;
+      }
+
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 5px;
+      }
+
+      button:hover {
+        background: #45a049;
+      }
+
+      button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+      }
+
+      .status-display {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 10px 0;
+        font-family: monospace;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #45a049);
+        transition: width 0.3s ease;
+        border-radius: 10px;
+      }
+
+      .log-container {
+        background: #1e1e1e;
+        color: #00ff00;
+        border-radius: 5px;
+        padding: 15px;
+        height: 300px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        margin: 20px 0;
+      }
+
+      .log-entry {
+        margin: 2px 0;
+        padding: 2px 0;
+      }
+
+      .log-timestamp {
+        color: #888;
+      }
+
+      .log-client {
+        color: #00aaff;
+      }
+
+      .log-server {
+        color: #ffaa00;
+      }
+
+      .log-status {
+        color: #00ff00;
+      }
+
+      .polling-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background: #ff4444;
+        border-radius: 50%;
+        margin-left: 10px;
+        animation: pulse 1.5s infinite;
+      }
+
+      .polling-indicator.waiting {
+        background: #ffaa00;
+        animation: pulse 1s infinite;
+      }
+
+      .polling-indicator.success {
+        background: #44ff44;
+        animation: none;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(1.2);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .metric-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        text-align: center;
+      }
+
+      .metric-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2196f3;
+      }
+
+      .metric-label {
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .explanation {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 Long Polling Demo - Job Status Tracker</h1>
+
+      <div class="explanation">
+        <strong>Long Polling Pattern:</strong> Client sends a request, server
+        HOLDS it until data changes, then responds immediately. Client then
+        sends a new request to continue the cycle.
+      </div>
+
+      <div class="step-section">
+        <div class="step-title">Step 1: Create a Job</div>
+        <button id="createJobBtn" onclick="createJob()">Create New Job</button>
+        <div id="jobInfo" style="display: none">
+          <strong>Job ID:</strong> <span id="jobId"></span>
+          <span
+            id="pollingIndicator"
+            class="polling-indicator"
+            style="display: none"
+          ></span>
+        </div>
+      </div>
+
+      <div class="step-section">
+        <div class="step-title">Step 2: Job Progress</div>
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="status-display">
+          <strong>Status:</strong> <span id="jobStatus">Not started</span><br />
+          <strong>Progress:</strong> <span id="jobProgress">0%</span><br />
+          <strong>Last Updated:</strong> <span id="lastUpdated">-</span>
+        </div>
+      </div>
+
+      <div class="step-section">
+        <div class="step-title">Step 3: Long Polling Actions</div>
+        <button id="startPollingBtn" onclick="startPolling()" disabled>
+          Start Long Polling
+        </button>
+        <button id="stopPollingBtn" onclick="stopPolling()" disabled>
+          Stop Polling
+        </button>
+        <div id="pollStatus">Ready to start polling...</div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="totalRequests">0</div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="avgWaitTime">0s</div>
+          <div class="metric-label">Avg Wait Time</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="currentWait">0s</div>
+          <div class="metric-label">Current Wait</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="pollingCycles">0</div>
+          <div class="metric-label">Polling Cycles</div>
+        </div>
+      </div>
+
+      <div class="step-section">
+        <div class="step-title">Step 4: Live Communication Log</div>
+        <div class="log-container" id="logContainer"></div>
+        <button onclick="clearLog()">Clear Log</button>
+      </div>
+    </div>
+
+    <script>
+      let currentJobId = null;
+      let isPolling = false;
+      let pollingController = null;
+      let currentPollStart = null;
+      let totalRequests = 0;
+      let totalWaitTime = 0;
+      let pollingCycles = 0;
+      let waitTimeInterval = null;
+
+      const SERVER_URL = 'http://localhost:8080';
+
+      function log(message, type = 'info') {
+        const logContainer = document.getElementById('logContainer');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+
+        let className = 'log-client';
+        if (type === 'server') className = 'log-server';
+        if (type === 'status') className = 'log-status';
+
+        logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> <span class="${className}">${message}</span>`;
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+
+      function clearLog() {
+        document.getElementById('logContainer').innerHTML = '';
+      }
+
+      function updateMetrics() {
+        document.getElementById('totalRequests').textContent = totalRequests;
+        document.getElementById('pollingCycles').textContent = pollingCycles;
+
+        const avgWait =
+          totalWaitTime > 0 ? Math.round(totalWaitTime / pollingCycles) : 0;
+        document.getElementById('avgWaitTime').textContent = avgWait + 's';
+      }
+
+      function startWaitTimer() {
+        let currentWait = 0;
+        waitTimeInterval = setInterval(() => {
+          currentWait++;
+          document.getElementById('currentWait').textContent =
+            currentWait + 's';
+        }, 1000);
+      }
+
+      function stopWaitTimer() {
+        if (waitTimeInterval) {
+          clearInterval(waitTimeInterval);
+          waitTimeInterval = null;
+        }
+        document.getElementById('currentWait').textContent = '0s';
+      }
+
+      async function createJob() {
+        log('🚀 CLIENT: Creating new job...', 'client');
+
+        try {
+          const response = await fetch(`${SERVER_URL}/create-job`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const data = await response.json();
+          currentJobId = data.jobId;
+
+          log(
+            `✅ SERVER: Job created successfully - ${currentJobId}`,
+            'server'
+          );
+          log(`📋 Job will start processing in 1 second...`, 'status');
+
+          document.getElementById('jobId').textContent = currentJobId;
+          document.getElementById('jobInfo').style.display = 'block';
+          document.getElementById('createJobBtn').disabled = true;
+          document.getElementById('startPollingBtn').disabled = false;
+
+          totalRequests++;
+          updateMetrics();
+        } catch (error) {
+          log(`❌ ERROR: Failed to create job - ${error.message}`, 'client');
+        }
+      }
+
+      async function startPolling() {
+        if (!currentJobId || isPolling) return;
+
+        isPolling = true;
+        document.getElementById('startPollingBtn').disabled = true;
+        document.getElementById('stopPollingBtn').disabled = false;
+        document.getElementById('pollingIndicator').style.display =
+          'inline-block';
+        document.getElementById('pollingIndicator').className =
+          'polling-indicator waiting';
+
+        log('🔄 CLIENT: Starting Long Polling cycle...', 'client');
+
+        await pollForStatus('pending'); // Start with pending status
+      }
+
+      async function pollForStatus(lastStatus) {
+        if (!isPolling) return;
+
+        const pollStart = Date.now();
+        currentPollStart = pollStart;
+
+        log(
+          `⏳ CLIENT: Sending poll request (lastStatus: ${lastStatus})`,
+          'client'
+        );
+        log(
+          `🔒 SERVER: Request received, checking for status changes...`,
+          'server'
+        );
+
+        startWaitTimer();
+
+        try {
+          pollingController = new AbortController();
+          totalRequests++;
+
+          const response = await fetch(
+            `${SERVER_URL}/poll-job-status?jobId=${currentJobId}&lastStatus=${lastStatus}`,
+            {
+              signal: pollingController.signal,
+            }
+          );
+
+          const data = await response.json();
+          const waitTime = Math.round((Date.now() - pollStart) / 1000);
+
+          stopWaitTimer();
+          totalWaitTime += waitTime;
+          pollingCycles++;
+
+          if (data.timeout) {
+            log(
+              `⏰ SERVER: Timeout reached (${waitTime}s) - no status change`,
+              'server'
+            );
+          } else if (data.statusChanged) {
+            log(
+              `📤 SERVER: Status changed! Responding immediately after ${waitTime}s wait`,
+              'server'
+            );
+            log(`✨ New status: ${data.status} (${data.progress}%)`, 'status');
+          } else if (data.immediate) {
+            log(
+              `⚡ SERVER: Immediate response - status already changed`,
+              'server'
+            );
+          }
+
+          // Update UI
+          updateJobStatus(data);
+          updateMetrics();
+
+          // Continue polling if job not complete and still polling
+          if (
+            isPolling &&
+            data.status !== 'completed' &&
+            data.status !== 'failed'
+          ) {
+            log(
+              `🔄 CLIENT: Job not complete, sending next poll request...`,
+              'client'
+            );
+            setTimeout(() => pollForStatus(data.status), 100); // Small delay for readability
+          } else if (data.status === 'completed') {
+            log(`🎉 JOB COMPLETED! Stopping polling cycle.`, 'status');
+            stopPolling();
+            document.getElementById('pollingIndicator').className =
+              'polling-indicator success';
+          }
+        } catch (error) {
+          stopWaitTimer();
+          if (error.name === 'AbortError') {
+            log('🛑 CLIENT: Polling stopped by user', 'client');
+          } else {
+            log(`❌ ERROR: Polling failed - ${error.message}`, 'client');
+          }
+        }
+      }
+
+      function updateJobStatus(data) {
+        document.getElementById('jobStatus').textContent = data.status;
+        document.getElementById(
+          'jobProgress'
+        ).textContent = `${data.progress}%`;
+        document.getElementById(
+          'progressFill'
+        ).style.width = `${data.progress}%`;
+
+        if (data.lastUpdated) {
+          const lastUpdated = new Date(data.lastUpdated).toLocaleTimeString();
+          document.getElementById('lastUpdated').textContent = lastUpdated;
+        }
+
+        document.getElementById('pollStatus').textContent = `Status: ${
+          data.status
+        } | Progress: ${data.progress}% | Polling: ${
+          isPolling ? 'Active' : 'Stopped'
+        }`;
+      }
+
+      function stopPolling() {
+        isPolling = false;
+
+        if (pollingController) {
+          pollingController.abort();
+          pollingController = null;
+        }
+
+        stopWaitTimer();
+
+        document.getElementById('startPollingBtn').disabled = false;
+        document.getElementById('stopPollingBtn').disabled = true;
+        document.getElementById('pollingIndicator').style.display = 'none';
+
+        log('🛑 CLIENT: Long Polling stopped', 'client');
+      }
+
+      // Reset everything for new demo
+      function reset() {
+        stopPolling();
+        currentJobId = null;
+        totalRequests = 0;
+        totalWaitTime = 0;
+        pollingCycles = 0;
+
+        document.getElementById('createJobBtn').disabled = false;
+        document.getElementById('jobInfo').style.display = 'none';
+        document.getElementById('progressFill').style.width = '0%';
+        document.getElementById('jobStatus').textContent = 'Not started';
+        document.getElementById('jobProgress').textContent = '0%';
+        document.getElementById('lastUpdated').textContent = '-';
+        document.getElementById('pollStatus').textContent =
+          'Ready to start polling...';
+
+        updateMetrics();
+        clearLog();
+      }
+
+      // Add reset button
+      window.onload = function () {
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = 'Reset Demo';
+        resetBtn.onclick = reset;
+        resetBtn.style.background = '#ff6b6b';
+        resetBtn.style.marginLeft = '10px';
+        document.querySelector('.step-section').appendChild(resetBtn);
+
+        log('🌟 Long Polling Demo ready! Create a job to start.', 'status');
+      };
+    </script>
+  </body>
+</html>
