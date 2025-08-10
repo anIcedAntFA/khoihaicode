@@ -1,6 +1,6 @@
 # Short Polling
 
->Request is taking a while, I'll check with you later
+> **"Request is taking a while, I'll check with you later"**
 
 ## What is Short Polling?
 
@@ -195,26 +195,59 @@ This implementation perfectly illustrates why Short Polling can become "chatty" 
 
 - **Short Polling**: The technique of a client repeatedly making requests to check the status of a server-side job.
 - **Asynchronous Backend Processing**: The core principle that enables polling; the server works on the task in the background.
-
 - **Job ID / Handle**: A unique identifier for a task, which the server returns immediately.
 - **Client-Driven Checks**: The client is responsible for initiating all status checks.
 - **Chattiness**: The primary drawback of this pattern, describing the high number of requests generated.
+
+## Short Polling vs Other Communication Patterns
+
+| Feature | Short Polling | Long Polling | Push Model | Server-Sent Events |
+|---------|---------------|--------------|------------|-------------------|
+| **Initiation** | Client-initiated | Client-initiated | Server-initiated | Server-initiated |
+| **Response Timing** | Immediate | Delayed (hold-and-wait) | Immediate when data available | Immediate when data available |
+| **Request Frequency** | High (regular intervals) | Low (only when needed) | N/A (persistent connection) | N/A (persistent connection) |
+| **Resource Efficiency** | Poor (many empty responses) | Good (fewer requests) | Excellent (no polling) | Excellent (no polling) |
+| **Implementation** | Simple | Medium | Complex | Simple |
+| **Disconnection Resilience** | Excellent | Excellent | Poor (connection loss) | Medium (auto-reconnect) |
+| **Real-time Performance** | Poor (polling intervals) | Good (near real-time) | Excellent (immediate) | Excellent (immediate) |
 
 ## Short Polling Pros and Cons
 
 Like any pattern, Short Polling has distinct trade-offs.
 
-**Pros:**
+### ✅ Pros
 
 - **Simple to Implement**: The logic on both the client and server is relatively straightforward to build.
 - **Good for Long-Running Requests**: It's an effective way to manage tasks without blocking the client.
 - **Handles Disconnection**: The client can disconnect, and upon reconnecting, use the saved Job ID to continue checking the status.
+- **Familiar HTTP Pattern**: Uses standard request-response which most developers understand well.
+- **No Connection State**: Server doesn't need to maintain persistent connections or client state.
 
-**Cons:**
+### ❌ Cons
 
 - **'Too Chatty'**: It generates a high volume of requests, most of which will likely be 'useless' because the job isn't done yet.
 - **Wasted Network Bandwidth**: The constant polling consumes network resources, which can be costly at scale.
 - **Wasted Backend Resources**: Each poll, even just to check a status, consumes server resources (CPU, connections) that could be used for more productive work.
+- **High Latency**: Updates are only discovered during polling intervals, not immediately.
+
+## When to Use Short Polling
+
+### ✅ Perfect For
+
+- **Long-running background jobs** like file processing, video encoding, or data analysis
+- **Build/deployment status checks** in CI/CD pipelines
+- **Order processing systems** where status updates happen infrequently
+- **Simple applications** where development speed is more important than optimization
+- **Legacy systems** that don't support more advanced techniques
+- **Scenarios with infrequent updates** where the "chattiness" is minimal
+
+### ❌ Not Suitable For
+
+- **Real-time applications** requiring immediate updates
+- **High-frequency status changes** that would result in excessive polling
+- **Battery-sensitive mobile applications** due to constant network requests
+- **High-scale systems** where polling overhead becomes significant
+- **Chat applications** or other real-time communication needs
 
 ## Short Polling Summary
 

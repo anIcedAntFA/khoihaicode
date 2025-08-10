@@ -1,5 +1,10 @@
 # Long Polling
 
+> **"Request is taking long, I'll check with you later"**  
+> **"But talk to me only when it's ready"**
+
+## What is Long Polling?
+
 > Request is taking long, I’ll check with you later
 > But talk to me only when it's ready
 
@@ -467,19 +472,56 @@ This implementation shows how Long Polling reduces the "chattiness" of Short Pol
 - **Server-Side Wait**: The responsibility of "waiting" is shifted from the client (in its application logic) to the server (by holding the connection).
 - **Timeout**: An essential mechanism on both client and server to prevent a request from being held indefinitely.
 
+## Long Polling vs Other Communication Patterns
+
+| Feature | Long Polling | Short Polling | Push Model | Server-Sent Events |
+|---------|--------------|---------------|------------|-------------------|
+| **Request Behavior** | Hold until data available | Immediate response | N/A (persistent connection) | N/A (persistent connection) |
+| **Server State** | Maintains request queue | Stateless | Maintains connection state | Maintains connection state |
+| **Efficiency** | High (reduced requests) | Low (frequent polling) | Highest (no polling) | High (single connection) |
+| **Timeout Handling** | Essential (prevents hanging) | Not needed | Connection-based | Automatic reconnection |
+| **Client Complexity** | Medium (handle timeouts) | Low | High (WebSocket management) | Low (EventSource API) |
+| **Bandwidth Usage** | Low (fewer requests) | High (constant polling) | Very low (only data) | Low (event stream) |
+| **Latency** | Very low (held requests) | High (polling intervals) | Immediate | Immediate |
+
 ## Pros and Cons
 
 Long polling offers a great balance but still has trade-offs.
 
-**Pros:**
+### ✅ Pros
 
 - **Less Chatty and Backend-Friendly**: It dramatically reduces the number of requests, saving network bandwidth and server resources.
 - **Client Can Still Disconnect**: Like short polling, this model is resilient to client disconnections.
+- **Near Real-Time**: Provides very low latency updates while maintaining request-response simplicity.
+- **Efficient Resource Usage**: Server only responds when there's actual data to send.
+- **HTTP-Compatible**: Works with existing web infrastructure and tools.
 
-**Cons:**
+### ❌ Cons
 
 - **Not Truly Real-Time**: There is a small latency gap between when a client receives a response and sends the next poll request. New data arriving in this gap won't be delivered instantly.
 - **Slightly More Complex**: Managing held connections and timeouts on the server side adds a layer of complexity compared to short polling.
+- **Server Resource Usage**: Held connections consume server memory and can limit concurrent handling.
+- **Timeout Management**: Requires careful timeout handling to prevent resource leaks.
+
+## When to Use Long Polling
+
+### ✅ Perfect For
+
+- **Notification systems** where immediate delivery is important but not critical
+- **Chat applications** as a simpler alternative to WebSockets
+- **Live dashboards** with moderate update frequencies
+- **Job status monitoring** for tasks that change state infrequently
+- **Message queue consumers** (like Apache Kafka) where you want efficient message fetching
+- **Comment systems** or social feeds where updates should appear quickly
+- **Systems requiring better efficiency** than short polling but simpler than WebSockets
+
+### ❌ Not Suitable For
+
+- **Very high-frequency updates** where WebSockets would be more appropriate
+- **Bidirectional communication** where client needs to send data frequently
+- **Applications requiring guaranteed real-time delivery** with zero latency gaps
+- **Simple status checks** where short polling's simplicity is preferred
+- **Mobile applications** where battery life is critical due to held connections
 
 ## Conclusion
 

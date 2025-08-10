@@ -95,8 +95,8 @@ SSE is elegant but has important limitations to consider.
 
 ## SSE vs Other Communication Patterns
 
-| Feature | Server-Sent Events | Long Polling | Short Polling | WebSockets |
-|---------|-------------------|--------------|---------------|------------|
+| Feature | Server-Sent Events | Long Polling | Short Polling | Push Model (WebSockets) |
+|---------|-------------------|--------------|---------------|------------------------|
 | **Connection Type** | Single long-lived | Request-response cycles | Request-response cycles | Bidirectional persistent |
 | **Data Direction** | Server → Client only | Server → Client only | Server → Client only | Bidirectional |
 | **Real-time** | Yes (immediate) | Yes (with delays) | No (intervals) | Yes (immediate) |
